@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NDD Printer M-Manager
 // @namespace    https://360.nddprint.com/
-// @version      4.10.0
+// @version      4.11.0
 // @description  Lista de impressoras do NDD Print 360: seleção em massa, alteração em lote da Contabilização, comparação com lista de séries e exclusão em massa via API.
 // @author       Maicon
 // @match        https://360.nddprint.com/*
@@ -155,7 +155,10 @@
     #ndd-bulk-bar .acc { border-top:1px solid #e8edf2; }
     #ndd-bulk-bar .acc-h { display:flex; align-items:center; gap:6px; padding:6px 2px; cursor:pointer; user-select:none; font-size:12px; }
     #ndd-bulk-bar .acc-h:hover { background:#f6f9fc; }
-    #ndd-bulk-bar .acc-h .car { width:10px; color:#8a97a5; font-size:10px; }
+    #ndd-bulk-bar .acc-h .car { flex:none; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; color:#5d6d7e; border-radius:3px; transition:transform .15s; }
+    #ndd-bulk-bar .acc-h:hover .car { color:#1a73c8; background:#e8f0fa; }
+    #ndd-bulk-bar .acc.open > .acc-h .car { transform:rotate(90deg); }
+    #ndd-bulk-bar .acc-h .car svg { display:block; }
     #ndd-bulk-bar .acc-t { font-weight:600; color:#34495e; white-space:nowrap; }
     #ndd-bulk-bar .acc-s { margin-left:auto; color:#667; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:205px; text-align:right; }
     #ndd-bulk-bar .acc-s .w { color:#9a7d0a; font-weight:600; }
@@ -504,10 +507,13 @@
   const LS_ACC = 'ndd-mm-acc';
   let accOpen = {};
   try { accOpen = JSON.parse(localStorage.getItem(LS_ACC) || '{}') || {}; } catch { /* ignore */ }
+  const ACC_DEFAULT = { acc: true }; // primeira instalação: "Contabilização" já aberta (depois vale a escolha do usuário)
+  const CHEVRON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   bar.querySelectorAll('.acc').forEach((sec) => {
     const k = sec.dataset.sec;
-    const set = (open) => { sec.classList.toggle('open', open); sec.querySelector('.car').textContent = open ? '▾' : '▸'; };
-    set(!!accOpen[k]);
+    sec.querySelector('.car').innerHTML = CHEVRON; // seta maior; gira 90° quando a seção está aberta (CSS)
+    const set = (open) => { sec.classList.toggle('open', open); sec.querySelector('.acc-h').setAttribute('aria-expanded', String(open)); };
+    set(accOpen[k] ?? !!ACC_DEFAULT[k]);
     sec.querySelector('.acc-h').addEventListener('click', () => {
       const open = !sec.classList.contains('open');
       set(open); accOpen[k] = open;
